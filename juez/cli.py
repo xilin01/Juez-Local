@@ -6,6 +6,7 @@ from itertools import repeat
 from pathlib import Path
 from .juzgar import juzgar_caso
 from .plataforma import Limites
+from .stress import stress
 
 
 def comando(ruta: str) -> list[str]:
@@ -49,6 +50,15 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0 if aceptados == len(casos) else 1
 
 
+def cmd_stress(args: argparse.Namespace) -> int:
+    import subprocess
+    try:
+        return stress(comando(args.solucion), comando(args.fuerza_bruta), comando(args.generador), Limites(args.tiempo, args.memoria),
+                      args.semilla, args.iteraciones, args.tam, Path(args.salida))
+    except subprocess.CalledProcessError as error:
+        sys.exit(f'juez: {error.cmd[0]} terminó con código {error.returncode}; el generador y la fuerza bruta no pueden fallar')
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog='juez', description='Juez local para programación competitiva.')
     ordenes = parser.add_subparsers(dest='orden', required=True)
@@ -60,6 +70,15 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument('carpeta_casos', help='carpeta con parejas nombre.in y nombre.out')
     run.add_argument('-j', '--trabajos', type=int, default=1, metavar='N', help='casos que se ejecutan a la vez (por defecto, 1)')
     run.set_defaults(funcion=cmd_run)
+    estres = ordenes.add_parser('stress', parents=[limites], help='compara una solución con una fuerza bruta sobre entradas aleatorias')
+    estres.add_argument('solucion', help='programa que se quiere comprobar')
+    estres.add_argument('fuerza_bruta', help='programa lento pero correcto; su salida se toma como la esperada')
+    estres.add_argument('generador', help='programa que recibe <semilla> <tamaño> y escribe una entrada')
+    estres.add_argument('-n', '--iteraciones', type=int, default=200, metavar='N', help='entradas que se prueban como máximo (por defecto, 200)')
+    estres.add_argument('--tam', type=int, default=10, metavar='T', help='tamaño que se pide al generador (por defecto, 10)')
+    estres.add_argument('--semilla', type=int, default=1, metavar='S', help='primera semilla; las siguientes son consecutivas (por defecto, 1)')
+    estres.add_argument('-o', '--salida', default='fallo', metavar='DIR', help='carpeta donde se guarda el caso que falla (por defecto, fallo)')
+    estres.set_defaults(funcion=cmd_stress)
     args = parser.parse_args(argv)
     if args.tiempo <= 0 or args.memoria <= 0: parser.error('los límites de tiempo y memoria deben ser positivos')
     if getattr(args, 'trabajos', 1) < 1: parser.error('-j debe ser al menos 1')
