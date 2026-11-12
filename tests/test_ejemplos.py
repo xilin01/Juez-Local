@@ -1,10 +1,8 @@
 """Cada solución de `ejemplos/` recibe su veredicto, y los límites cortan lo que deben cortar."""
-import sys
 from pathlib import Path
 import pytest
 from conftest import EXE, RAIZ
-from juez.cli import main
-from juez.juzgar import Informe, juzgar_caso
+from juez.juzgar import Informe
 from juez.plataforma import Limites
 
 
@@ -18,12 +16,14 @@ ESPERADO = {'correcta': ['AC', 'AC', 'AC', 'AC', 'AC'],
 
 
 def juzgar(cmd: list[str], caso: str, limites: Limites = Limites()) -> Informe:
+    from juez.juzgar import juzgar_caso
     return juzgar_caso(cmd, CASOS / f'{caso}.in', CASOS / f'{caso}.out', limites)
 
 
 def script(carpeta: Path, codigo: str) -> list[str]:
     ruta = carpeta / 'programa.py'
     ruta.write_text(codigo)
+    import sys
     return [sys.executable, str(ruta)]
 
 
@@ -59,6 +59,7 @@ def test_limite_de_memoria_configurable(tmp_path: Path) -> None:
 
 
 def test_run_acepta_limites_por_opcion(binarios: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    from juez.cli import main
     assert main(['run', str(binarios / ('lenta' + EXE)), str(CASOS), '-t', '0.3', '-m', '64']) == 1
     salida = capsys.readouterr().out
     assert '0.3 s | 64 MB' in salida and '05-grande      | TLE' in salida and '4/5 AC' in salida

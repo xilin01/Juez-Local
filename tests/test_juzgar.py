@@ -1,10 +1,8 @@
 """Comparador, diff y veredictos básicos, con programas triviales en Python para no depender del compilador."""
-import sys
 from pathlib import Path
 import pytest
 from juez.cli import main
-from juez.juzgar import diff_legible, juzgar_caso, lineas
-from juez.plataforma import Limites
+from juez.juzgar import diff_legible
 
 
 def escribir_caso(carpeta: Path, programa: str) -> Path:
@@ -19,6 +17,7 @@ def escribir_caso(carpeta: Path, programa: str) -> Path:
 def test_lineas_ignora_espacios_y_lineas_vacias_finales(tmp_path: Path) -> None:
     archivo = tmp_path / 'salida.txt'
     archivo.write_text('1 2  \n\n3\n\n\n')
+    from juez.juzgar import lineas
     assert lineas(archivo) == ['1 2', '', '3']
 
 
@@ -36,6 +35,9 @@ def test_diff_cuando_falta_salida() -> None:
 @pytest.mark.parametrize('programa, veredicto', [('print(int(input()) * 2)', 'AC'), ('print(int(input()) + 2)', 'WA'), ('raise SystemExit(3)', 'RTE')])
 def test_veredictos_basicos(tmp_path: Path, programa: str, veredicto: str) -> None:
     sol = escribir_caso(tmp_path, programa)
+    import sys
+    from juez.juzgar import juzgar_caso
+    from juez.plataforma import Limites
     informe = juzgar_caso([sys.executable, str(sol)], tmp_path / 'caso.in', tmp_path / 'caso.out', Limites())
     assert informe.veredicto == veredicto
     assert (informe.detalle != '') == (veredicto in ('WA', 'RTE'))

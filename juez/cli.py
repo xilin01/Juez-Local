@@ -4,9 +4,7 @@ import shutil
 import sys
 from itertools import repeat
 from pathlib import Path
-from .juzgar import juzgar_caso
 from .plataforma import Limites
-from .stress import stress
 
 
 def comando(ruta: str) -> list[str]:
@@ -39,8 +37,10 @@ def cmd_run(args: argparse.Namespace) -> int:
     from concurrent.futures import ProcessPoolExecutor
     from contextlib import nullcontext
     # Procesos y no hilos: cada trabajador lanza sus programas desde un proceso de un solo hilo, que es lo que exige preexec_fn en Linux.
-    with ProcessPoolExecutor(min(args.trabajos, len(casos))) if args.trabajos > 1 else nullcontext() as pool:
+    # El tope de 61 es el máximo de trabajadores que admite ProcessPoolExecutor en Windows.
+    with ProcessPoolExecutor(min(args.trabajos, len(casos), 61)) if args.trabajos > 1 else nullcontext() as pool:
         mapear = pool.map if pool else map
+        from .juzgar import juzgar_caso
         # Los informes llegan en el orden de los casos, aunque terminen en otro.
         for informe in mapear(juzgar_caso, repeat(cmd), *zip(*casos), repeat(limites)):
             print(f'{informe.nombre:<{ancho}} | {informe.veredicto:<3} | {informe.cpu_s:7.3f} s | {informe.memoria_kb / 1024:7.1f} MB')
@@ -53,6 +53,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 def cmd_stress(args: argparse.Namespace) -> int:
     import subprocess
     try:
+        from .stress import stress
         return stress(comando(args.solucion), comando(args.fuerza_bruta), comando(args.generador), Limites(args.tiempo, args.memoria),
                       args.semilla, args.iteraciones, args.tam, Path(args.salida))
     except subprocess.CalledProcessError as error:
@@ -60,6 +61,9 @@ def cmd_stress(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Al redirigir la salida en Windows, la codificación por defecto no es UTF-8 y los acentos salen mal.
+    for flujo in (sys.stdout, sys.stderr):
+        if not flujo.isatty(): flujo.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(prog='juez', description='Juez local para programación competitiva.')
     ordenes = parser.add_subparsers(dest='orden', required=True)
     limites = argparse.ArgumentParser(add_help=False) # Opciones que comparten todas las órdenes.

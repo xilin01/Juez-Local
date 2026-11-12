@@ -167,7 +167,7 @@ Todo el código que depende del sistema está en `juez/plataforma/`. El resto so
 - No hay límite de tamaño de salida. Un programa que escribe sin parar llena el disco hasta que salta el TLE.
 - Lo que el programa escribe en stderr no se muestra.
 - El tamaño de pila es el del sistema: 1 MB por defecto en un ejecutable de Windows y 8 MB en Linux. Una recursión profunda aparece como RTE.
-- Con `-j` mayor que el número de núcleos, los programas compiten entre sí y el tiempo de CPU medido crece. `juez` avisa, pero no lo impide.
+- Con `-j` mayor que el número de núcleos, los programas compiten entre sí y el tiempo de CPU medido crece. `juez` avisa, pero no lo impide. El máximo real es 61 trabajadores.
 
 **Memoria**
 

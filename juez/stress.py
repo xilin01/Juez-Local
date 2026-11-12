@@ -1,9 +1,8 @@
 """Prueba de estrés: busca una entrada aleatoria en la que la solución discrepa de la fuerza bruta y después la reduce."""
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
-from .juzgar import Informe, juzgar_caso
+from .juzgar import Informe
 from .plataforma import Limites
 
 
@@ -19,11 +18,13 @@ def probar(sol: list[str], bruta: list[str], gen: list[str], semilla: int, tam: 
 
     with open(entrada, 'wb') as f: subprocess.run(gen + [str(semilla), str(tam)], stdout=f, check=True)
     with open(entrada, 'rb') as f_in, open(esperada, 'wb') as f_out: subprocess.run(bruta, stdin=f_in, stdout=f_out, check=True)
+    from .juzgar import juzgar_caso
     return juzgar_caso(sol, entrada, esperada, limites)
 
 
 def stress(sol: list[str], bruta: list[str], gen: list[str], limites: Limites, semilla: int, iteraciones: int, tam: int, carpeta: Path) -> int:
     """Devuelve 1 si encuentra una discrepancia, que deja guardada en `carpeta`, y 0 si no."""
+    import tempfile
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         def falla(candidato: tuple[int, int]) -> bool:
             if sys.stdout.isatty(): print(f'\r[stress] Semilla {candidato[0]}, tamaño {candidato[1]}...   ', end='', flush=True)

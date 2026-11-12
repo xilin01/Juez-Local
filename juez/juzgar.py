@@ -1,8 +1,7 @@
 """Juzga un caso: ejecuta el programa, clasifica cómo terminó y compara su salida con la esperada."""
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from .plataforma import Limites, ejecutar
+from .plataforma import Limites
 
 
 @dataclass(frozen=True)
@@ -38,9 +37,11 @@ def causa(codigo: int) -> str:
 
 
 def juzgar_caso(cmd: list[str], entrada: Path, esperada: Path, limites: Limites) -> Informe:
+    import tempfile
     # En Windows el borrado puede fallar si un proceso recién muerto aún no ha soltado el archivo.
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         salida = Path(tmp) / 'salida.txt'
+        from .plataforma import ejecutar
         res = ejecutar(cmd, entrada, salida, limites)
         veredicto, detalle = 'AC', ''
 
