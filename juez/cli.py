@@ -2,6 +2,7 @@
 import argparse
 import shutil
 import sys
+from itertools import repeat
 from pathlib import Path
 from .juzgar import juzgar_caso
 from .plataforma import Limites
@@ -32,11 +33,18 @@ def cmd_run(args: argparse.Namespace) -> int:
     ancho = max(len(entrada.stem) for entrada, _ in casos)
     aceptados = 0
     print(f'=== {Path(args.ejecutable).name}: {len(casos)} casos | {limites.tiempo_s:g} s | {limites.memoria_mb} MB ===')
-    for entrada, esperada in casos:
-        informe = juzgar_caso(cmd, entrada, esperada, limites)
-        print(f'{informe.nombre:<{ancho}} | {informe.veredicto:<3} | {informe.cpu_s:7.3f} s | {informe.memoria_kb / 1024:7.1f} MB')
-        if informe.detalle: print('    ' + informe.detalle.replace('\n', '\n    '))
-        aceptados += informe.veredicto == 'AC'
+    import os
+    if args.trabajos > (os.cpu_count() or 1): print('juez: aviso: -j supera el número de núcleos; los tiempos medidos pueden crecer', file=sys.stderr)
+    from concurrent.futures import ProcessPoolExecutor
+    from contextlib import nullcontext
+    # Procesos y no hilos: cada trabajador lanza sus programas desde un proceso de un solo hilo, que es lo que exige preexec_fn en Linux.
+    with ProcessPoolExecutor(min(args.trabajos, len(casos))) if args.trabajos > 1 else nullcontext() as pool:
+        mapear = pool.map if pool else map
+        # Los informes llegan en el orden de los casos, aunque terminen en otro.
+        for informe in mapear(juzgar_caso, repeat(cmd), *zip(*casos), repeat(limites)):
+            print(f'{informe.nombre:<{ancho}} | {informe.veredicto:<3} | {informe.cpu_s:7.3f} s | {informe.memoria_kb / 1024:7.1f} MB')
+            if informe.detalle: print('    ' + informe.detalle.replace('\n', '\n    '))
+            aceptados += informe.veredicto == 'AC'
     print(f'=== {aceptados}/{len(casos)} AC ===')
     return 0 if aceptados == len(casos) else 1
 
@@ -50,7 +58,9 @@ def main(argv: list[str] | None = None) -> int:
     run = ordenes.add_parser('run', parents=[limites], help='ejecuta un programa contra los casos de una carpeta')
     run.add_argument('ejecutable', help='programa a juzgar: un ejecutable o un .py')
     run.add_argument('carpeta_casos', help='carpeta con parejas nombre.in y nombre.out')
+    run.add_argument('-j', '--trabajos', type=int, default=1, metavar='N', help='casos que se ejecutan a la vez (por defecto, 1)')
     run.set_defaults(funcion=cmd_run)
     args = parser.parse_args(argv)
     if args.tiempo <= 0 or args.memoria <= 0: parser.error('los límites de tiempo y memoria deben ser positivos')
+    if getattr(args, 'trabajos', 1) < 1: parser.error('-j debe ser al menos 1')
     return args.funcion(args)
