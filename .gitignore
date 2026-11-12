@@ -1,0 +1,12 @@
+# Notas personales de diseño: no forman parte del repositorio.
+docs/NOTAS.md
+
+__pycache__/
+.pytest_cache/
+*.egg-info/
+build/
+
+# Binarios compilados y contraejemplos que guarda `juez stress`.
+*.exe
+*.o
+fallo/
