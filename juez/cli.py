@@ -28,11 +28,12 @@ def buscar_casos(carpeta: Path) -> list[tuple[Path, Path]]:
 def cmd_run(args: argparse.Namespace) -> int:
     cmd = comando(args.ejecutable)
     casos = buscar_casos(Path(args.carpeta_casos))
+    limites = Limites(args.tiempo, args.memoria)
     ancho = max(len(entrada.stem) for entrada, _ in casos)
     aceptados = 0
-    print(f'=== {Path(args.ejecutable).name}: {len(casos)} casos ===')
+    print(f'=== {Path(args.ejecutable).name}: {len(casos)} casos | {limites.tiempo_s:g} s | {limites.memoria_mb} MB ===')
     for entrada, esperada in casos:
-        informe = juzgar_caso(cmd, entrada, esperada, Limites())
+        informe = juzgar_caso(cmd, entrada, esperada, limites)
         print(f'{informe.nombre:<{ancho}} | {informe.veredicto:<3} | {informe.cpu_s:7.3f} s | {informe.memoria_kb / 1024:7.1f} MB')
         if informe.detalle: print('    ' + informe.detalle.replace('\n', '\n    '))
         aceptados += informe.veredicto == 'AC'
@@ -43,9 +44,13 @@ def cmd_run(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog='juez', description='Juez local para programación competitiva.')
     ordenes = parser.add_subparsers(dest='orden', required=True)
-    run = ordenes.add_parser('run', help='ejecuta un programa contra los casos de una carpeta')
+    limites = argparse.ArgumentParser(add_help=False) # Opciones que comparten todas las órdenes.
+    limites.add_argument('-t', '--tiempo', type=float, default=1.0, metavar='S', help='límite de tiempo de CPU por caso, en segundos (por defecto, 1)')
+    limites.add_argument('-m', '--memoria', type=int, default=256, metavar='MB', help='límite de memoria por caso, en MB (por defecto, 256)')
+    run = ordenes.add_parser('run', parents=[limites], help='ejecuta un programa contra los casos de una carpeta')
     run.add_argument('ejecutable', help='programa a juzgar: un ejecutable o un .py')
     run.add_argument('carpeta_casos', help='carpeta con parejas nombre.in y nombre.out')
     run.set_defaults(funcion=cmd_run)
     args = parser.parse_args(argv)
+    if args.tiempo <= 0 or args.memoria <= 0: parser.error('los límites de tiempo y memoria deben ser positivos')
     return args.funcion(args)

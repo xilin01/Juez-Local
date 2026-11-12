@@ -1,0 +1,26 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false # Si falla un sistema, interesa ver igualmente el resultado del otro.
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Compilador disponible
+        run: g++ --version
+      - name: Instalar juez y pytest
+        run: python -m pip install -e ".[test]"
+      - name: Tests (compilan los ejemplos con g++)
+        run: python -m pytest -v
+      - name: El comando instalado funciona
+        run: juez --help
