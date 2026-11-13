@@ -10,8 +10,8 @@ from .plataforma import Limites
 def comando(ruta: str) -> list[str]:
     """Los `.py` se lanzan con el intérprete actual; lo demás debe ser un ejecutable."""
     if ruta.endswith('.py') and Path(ruta).is_file(): return [sys.executable, ruta]
-    # La segunda búsqueda cubre `juez run sol casos` en Linux, donde `which` no mira el directorio actual.
-    ejecutable = shutil.which(ruta) or shutil.which(str(Path(ruta).resolve()))
+    # Primero la ruta resuelta: en Linux `which` no mira el directorio actual, y un `test` local quedaría tapado por el del PATH.
+    ejecutable = shutil.which(str(Path(ruta).resolve())) or shutil.which(ruta)
     if ejecutable is None: sys.exit(f'juez: no encuentro el ejecutable {ruta}')
     return [str(Path(ejecutable).resolve())]
 

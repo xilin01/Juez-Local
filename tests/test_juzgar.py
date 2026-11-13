@@ -50,6 +50,17 @@ def test_run_informa_por_caso_y_devuelve_estado(tmp_path: Path, capsys: pytest.C
     assert 'caso | WA' in salida and '-42' in salida and '+23' in salida and '0/1 AC' in salida
 
 
+def test_un_programa_local_gana_al_del_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """`sort` existe en el PATH de Windows y de Linux: escrito sin ruta, debe elegirse el de la carpeta actual."""
+    from conftest import EXE
+    local = tmp_path / ('sort' + EXE)
+    local.write_text('#!/bin/sh\n')
+    local.chmod(0o755)
+    monkeypatch.chdir(tmp_path)
+    from juez.cli import comando
+    assert comando('sort') == [str(local.resolve())]
+
+
 def test_run_falla_si_falta_un_out(tmp_path: Path) -> None:
     sol = escribir_caso(tmp_path, 'print(42)')
     (tmp_path / 'caso.out').unlink()

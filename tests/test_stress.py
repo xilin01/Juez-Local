@@ -33,6 +33,17 @@ def test_stress_con_un_error_en_ejecucion_tambien_es_fallo(binarios: Path, tmp_p
     assert 'RTE con semilla' in capsys.readouterr().out and (fallo / 'caso.out').is_file()
 
 
+def test_stress_guarda_el_caso_aunque_el_generador_no_admita_tamanos_menores(binarios: Path, tmp_path: Path) -> None:
+    """Con tamaño 1 este generador falla: la reducción debe saltarse ese tamaño y no perder la discrepancia."""
+    gen = tmp_path / 'gen.py'
+    gen.write_text('import random, sys\nrng = random.Random(int(sys.argv[1]))\ntam = int(sys.argv[2])\nn = rng.randint(2, tam)\n'
+                   'print(n)\nprint(*(rng.randint(-tam, tam) for _ in range(n)))')
+    incorrecta, lenta, fallo = str(binarios / ('incorrecta' + EXE)), str(binarios / ('lenta' + EXE)), tmp_path / 'fallo'
+    assert main(['stress', incorrecta, lenta, str(gen), '-o', str(fallo)]) == 1
+    assert int((fallo / 'caso.in').read_text().split()[0]) >= 2
+    assert juzgar_caso([incorrecta], fallo / 'caso.in', fallo / 'caso.out', Limites()).veredicto == 'WA'
+
+
 def test_stress_avisa_si_el_generador_falla(binarios: Path, tmp_path: Path) -> None:
     gen = tmp_path / 'gen.py'
     gen.write_text('raise SystemExit(5)')

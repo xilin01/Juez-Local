@@ -1,5 +1,5 @@
 // Revienta: el bucle llega hasta i == n y se sale del vector.
-// at() comprueba el índice y lanza std::out_of_range; nadie la captura y el programa aborta.
+// at() comprueba el índice y lanza std::out_of_range: nadie la captura y el programa aborta.
 #include <algorithm>
 #include <iostream>
 #include <vector>

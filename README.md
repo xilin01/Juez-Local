@@ -1,8 +1,8 @@
-# juez
+# Juez local
 
 [![tests](https://github.com/xilin01/Juez-Local/actions/workflows/tests.yml/badge.svg)](https://github.com/xilin01/Juez-Local/actions/workflows/tests.yml)
 
-Juez local para programación competitiva. Ejecuta una solución contra casos de prueba y da un veredicto por caso (AC, WA, TLE, MLE, RTE) con el tiempo de CPU y la memoria máxima. También compara una solución con una fuerza bruta sobre entradas aleatorias hasta encontrar un contraejemplo.
+Juez local para programación competitiva. Ejecuta una solución contra casos de prueba y da un veredicto por caso (AC, WA, TLE, MLE, RTE) con el tiempo de CPU y la memoria máxima. Además, compara una solución contra fuerza bruta sobre entradas aleatorias hasta encontrar un contraejemplo.
 
 Funciona en Windows y en Linux. Está escrito en Python sin dependencias externas.
 
@@ -35,23 +35,23 @@ juez run <ejecutable> <carpeta_casos> [-t S] [-m MB] [-j N]
 
 Ejecuta el programa con cada `nombre.in` de la carpeta y compara su salida con `nombre.out`.
 
-| Opción | Significado | Por defecto |
-|---|---|---|
-| `-t`, `--tiempo` | Límite de tiempo de CPU por caso, en segundos. | 1 |
-| `-m`, `--memoria` | Límite de memoria por caso, en MB. | 256 |
-| `-j`, `--trabajos` | Casos que se ejecutan a la vez. | 1 |
+| Opción                | Significado                                     | Por defecto |
+| ---------------------- | ----------------------------------------------- | ----------- |
+| `-t`, `--tiempo`   | Límite de tiempo de CPU por caso, en segundos. | 1           |
+| `-m`, `--memoria`  | Límite de memoria por caso, en MB.             | 256         |
+| `-j`, `--trabajos` | Casos que se ejecutan a la vez.                 | 1           |
 
 El programa puede ser un ejecutable o un `.py`, que se lanza con el mismo Python que ejecuta `juez`.
 
 Veredictos:
 
-| Veredicto | Significado |
-|---|---|
-| AC | La salida coincide con la esperada. Se ignoran los espacios al final de cada línea y las líneas vacías al final. |
-| WA | La salida no coincide. Se muestran las líneas que rodean a la primera diferencia. |
-| TLE | Superó el tiempo de CPU, o estuvo esperando sin gastar CPU más de `2 × tiempo + 1` segundos. |
-| MLE | Intentó usar más memoria de la permitida. |
-| RTE | Terminó con un código de salida distinto de 0 o lo mató una señal. |
+| Veredicto | Significado                                                                                                          |
+| --------- | -------------------------------------------------------------------------------------------------------------------- |
+| AC        | La salida coincide con la esperada (se ignoran los espacios al final de cada línea y las líneas vacías al final). |
+| WA        | La salida no coincide. Se muestran las líneas que rodean la primera diferencia.                                     |
+| TLE       | Superó el tiempo de CPU o estuvo esperando sin gastar CPU más de `2 × tiempo + 1` segundos.                     |
+| MLE       | Intentó usar más memoria de la permitida.                                                                          |
+| RTE       | Terminó con un código de salida distinto de 0 o lo mató una señal.                                               |
 
 `juez run` termina con código 0 si todos los casos son AC y con 1 si no.
 
@@ -67,14 +67,14 @@ juez stress <solucion> <fuerza_bruta> <generador> [-n N] [--tam T] [--semilla S]
 4. Intenta reducir el contraejemplo: prueba tamaños menores (1, 2, 4...) con 20 semillas cada uno y se queda con el menor que falle.
 5. Guarda el caso en `DIR/caso.in` y `DIR/caso.out`.
 
-| Opción | Significado | Por defecto |
-|---|---|---|
-| `-n`, `--iteraciones` | Entradas que se prueban como máximo. | 200 |
-| `--tam` | Tamaño que se pide al generador. | 10 |
-| `--semilla` | Primera semilla; las siguientes son consecutivas. | 1 |
-| `-o`, `--salida` | Carpeta donde se guarda el caso que falla. | `fallo` |
+| Opción                   | Significado                                       | Por defecto |
+| ------------------------- | ------------------------------------------------- | ----------- |
+| `-n`, `--iteraciones` | Entradas que se prueban como máximo.             | 200         |
+| `--tam`                 | Tamaño que se pide al generador.                 | 10          |
+| `--semilla`             | Primera semilla, las siguientes son consecutivas. | 1           |
+| `-o`, `--salida`      | Carpeta donde se guarda el caso que falla.        | `fallo`   |
 
-El generador debe ser determinista: la misma semilla y el mismo tamaño dan siempre la misma entrada. Qué significa «tamaño» lo decide el generador; basta con que un tamaño menor produzca entradas más pequeñas.
+El generador debe ser determinista: la misma semilla y el mismo tamaño dan siempre la misma entrada. Qué significa "tamaño" lo decide el generador.
 
 La carpeta de salida es una carpeta de casos válida, así que `juez run solucion fallo` repite el contraejemplo.
 
@@ -147,13 +147,13 @@ En la línea `--2`, el primer `-` marca «esperado» y `-2` es el contenido.
 
 ## Cómo se aplican los límites
 
-| | Windows | Linux |
-|---|---|---|
-| Mecanismo | Un Job Object por ejecución | `setrlimit` en el proceso hijo |
-| Tiempo | Se consulta la CPU del job cada 10 ms | `RLIMIT_CPU` y tiempo de `wait4` |
-| Memoria que se limita | Memoria comprometida (commit) | Espacio de direcciones (`RLIMIT_AS`) |
-| Memoria que se muestra | Pico de memoria comprometida | Pico de memoria residente (`ru_maxrss`) |
-| Detección de MLE | Aviso del propio job | Fin anormal y `bad_alloc` o `MemoryError` en stderr |
+|                        | Windows                               | Linux                                                   |
+| ---------------------- | ------------------------------------- | ------------------------------------------------------- |
+| Mecanismo              | Un Job Object por ejecución          | `setrlimit` en el proceso hijo                        |
+| Tiempo                 | Se consulta la CPU del job cada 10 ms | `RLIMIT_CPU` y tiempo de `wait4`                    |
+| Memoria que se limita  | Memoria comprometida (commit)         | Espacio de direcciones (`RLIMIT_AS`)                  |
+| Memoria que se muestra | Pico de memoria comprometida          | Pico de memoria residente (`ru_maxrss`)               |
+| Detección de MLE      | Aviso del propio job                  | Fin anormal y `bad_alloc` o `MemoryError` en stderr |
 
 Todo el código que depende del sistema está en `juez/plataforma/`. El resto solo usa la función `ejecutar(cmd, entrada, salida, limites)`.
 
@@ -185,8 +185,9 @@ Todo el código que depende del sistema está en `juez/plataforma/`. El resto so
 
 - El caso reducido es el menor que se encuentra con 20 semillas por tamaño, no necesariamente el mínimo.
 - El generador y la fuerza bruta se ejecutan sin límites.
+- Durante la reducción se saltan, sin avisar, los tamaños en los que el generador o la fuerza bruta fallan.
 - En Windows con Python 3.10 o 3.11 hay que escribir la extensión `.exe` de los programas.
 
-## Licencia
+## Licencia MIT
 
-MIT. Ver [LICENSE](LICENSE).
+Ver [LICENSE](LICENSE).
